@@ -12,6 +12,11 @@ o.list = false -- não mostrar caracteres invisíveis
 o.laststatus = 3 -- uma statusline global
 o.showtabline = 2 -- sempre mostra a tabline (lista de buffers do mini.tabline)
 
+-- Limite de 80 colunas: `gq` reformata nesse tamanho e a coluna 81 fica marcada.
+-- Ao salvar, quem decide a quebra do código é o formatador (clang-format: 80; ruff: 88).
+o.textwidth = 80
+o.colorcolumn = '+1'
+
 -- Indentação: 4 espaços por padrão. O guess-indent detecta o estilo de cada arquivo.
 o.expandtab = true
 o.tabstop = 4

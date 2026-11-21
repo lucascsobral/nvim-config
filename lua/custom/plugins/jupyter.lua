@@ -109,11 +109,17 @@ local function find_project_venv()
   end
 end
 
-local function jupyter_kernels_dir()
-  if vim.env.JUPYTER_DATA_DIR then return vim.env.JUPYTER_DATA_DIR .. '/kernels' end
-  if vim.fn.has 'mac' == 1 then return vim.env.HOME .. '/Library/Jupyter/kernels' end
-  return (vim.env.XDG_DATA_HOME or (vim.env.HOME .. '/.local/share')) .. '/jupyter/kernels'
+local function jupyter_data_dir()
+  if vim.env.JUPYTER_DATA_DIR then return vim.env.JUPYTER_DATA_DIR end
+  if vim.fn.has 'mac' == 1 then return vim.env.HOME .. '/Library/Jupyter' end
+  return (vim.env.XDG_DATA_HOME or (vim.env.HOME .. '/.local/share')) .. '/jupyter'
 end
+local function jupyter_kernels_dir() return jupyter_data_dir() .. '/kernels' end
+
+-- O molten grava o arquivo de conexão do kernel em <dados do jupyter>/runtime, mas ninguém
+-- cria essa pasta. Numa máquina onde o Jupyter nunca rodou, iniciar o kernel falha com
+-- "No such file or directory: .../jupyter/runtime/kernel-....json".
+vim.fn.mkdir(jupyter_data_dir() .. '/runtime', 'p', tonumber('700', 8))
 
 --- Comando assíncrono; chama on_ok só se der certo, senão mostra o erro.
 local function run(cmd, what, on_ok)

@@ -5,11 +5,10 @@
 --   image.nvim     desenha gráficos/imagens (só em terminais com protocolo gráfico do Kitty:
 --                  Ghostty, WezTerm, Kitty)
 --
--- Fluxo básico: abra o .ipynb, <leader>ji para escolher o kernel, <leader>jr para rodar a célula.
+-- Fluxo básico: abra o .ipynb, <leader>ji para iniciar o kernel, <leader>jr para rodar a célula.
+-- O <leader>ji usa o venv do projeto (.venv, venv ou env), se houver; veja "Kernel do venv" abaixo.
 -- Ambiente Python do nvim (pynvim, jupyter_client, jupytext, ipykernel, numpy, pandas, matplotlib):
 --   ~/.local/share/nvim/python-venv
--- Para usar o ambiente de um projeto como kernel, dentro do venv do projeto rode:
---   pip install ipykernel && python -m ipykernel install --user --name nome-do-projeto
 
 local venv = vim.fn.stdpath 'data' .. '/python-venv'
 
@@ -94,10 +93,75 @@ local function jump_cell(flags)
   if line ~= 0 then vim.api.nvim_win_set_cursor(0, { math.min(line + 1, vim.fn.line '$'), 0 }) end
 end
 
+-- [[ Kernel do venv do projeto ]] ---------------------------------------------
+-- <leader>ji procura um venv do projeto: o ativado no terminal ($VIRTUAL_ENV) ou uma pasta
+-- .venv, venv ou env subindo a partir do arquivo. Se achar, instala o ipykernel nele (pergunta
+-- antes), registra o kernel com o nome da pasta do projeto e inicia esse kernel.
+-- Sem venv, abre a lista de kernels (como <leader>jk).
+
+local function find_project_venv()
+  local active = vim.env.VIRTUAL_ENV
+  if active and active ~= venv and vim.uv.fs_stat(active .. '/bin/python') then return active end
+  local start = vim.fn.expand '%:p:h'
+  if start == '' then start = vim.fn.getcwd() end
+  for _, dir in ipairs(vim.fs.find({ '.venv', 'venv', 'env' }, { path = start, upward = true, stop = vim.env.HOME, type = 'directory', limit = math.huge })) do
+    if vim.uv.fs_stat(dir .. '/bin/python') and vim.uv.fs_stat(dir .. '/pyvenv.cfg') then return dir end
+  end
+end
+
+local function jupyter_kernels_dir()
+  if vim.env.JUPYTER_DATA_DIR then return vim.env.JUPYTER_DATA_DIR .. '/kernels' end
+  if vim.fn.has 'mac' == 1 then return vim.env.HOME .. '/Library/Jupyter/kernels' end
+  return (vim.env.XDG_DATA_HOME or (vim.env.HOME .. '/.local/share')) .. '/jupyter/kernels'
+end
+
+--- Comando assíncrono; chama on_ok só se der certo, senão mostra o erro.
+local function run(cmd, what, on_ok)
+  vim.system(cmd, { text = true }, function(out)
+    vim.schedule(function()
+      if out.code == 0 then
+        on_ok()
+      else
+        vim.notify(what .. ' falhou:\n' .. vim.trim((out.stderr or '') .. (out.stdout or '')), vim.log.levels.ERROR)
+      end
+    end)
+  end)
+end
+
+local function init_project_kernel()
+  local project_venv = find_project_venv()
+  if not project_venv then return vim.cmd 'MoltenInit' end
+
+  local python = project_venv .. '/bin/python'
+  local project = vim.fs.basename(vim.fs.dirname(project_venv))
+  local name = project:lower():gsub('[^%w%.%-_]', '-')
+  local kernel_json = jupyter_kernels_dir() .. '/' .. name .. '/kernel.json'
+
+  local function start() vim.cmd('MoltenInit ' .. name) end
+
+  local function register()
+    local ok, spec = pcall(function() return vim.json.decode(table.concat(vim.fn.readfile(kernel_json), '\n')) end)
+    if ok and spec.argv and spec.argv[1] == python then return start() end
+    vim.notify('Registrando o kernel ' .. name .. '...')
+    run({ python, '-m', 'ipykernel', 'install', '--user', '--name', name, '--display-name', 'Python (' .. project .. ')' }, 'Registrar o kernel', start)
+  end
+
+  if vim.system({ python, '-c', 'import ipykernel' }):wait().code == 0 then return register() end
+
+  local answer = vim.fn.confirm('O venv ' .. project_venv .. ' não tem o ipykernel. Instalar agora?', '&Sim\n&Não', 1)
+  if answer ~= 1 then return end
+  -- venvs criados pelo uv não têm pip; nesse caso usa o próprio uv.
+  local has_pip = vim.system({ python, '-m', 'pip', '--version' }):wait().code == 0
+  local cmd = has_pip and { python, '-m', 'pip', 'install', 'ipykernel' } or { 'uv', 'pip', 'install', '--python', python, 'ipykernel' }
+  vim.notify 'Instalando o ipykernel no venv do projeto...'
+  run(cmd, 'Instalar o ipykernel', register)
+end
+
 -- [[ Atalhos ]] ---------------------------------------------------------------
 local map = function(mode, lhs, rhs, desc) vim.keymap.set(mode, lhs, rhs, { silent = true, desc = 'Jupyter: ' .. desc }) end
 
-map('n', '<leader>ji', '<cmd>MoltenInit<CR>', 'iniciar kernel')
+map('n', '<leader>ji', init_project_kernel, 'iniciar kernel (venv do projeto, se houver)')
+map('n', '<leader>jk', '<cmd>MoltenInit<CR>', 'escolher kernel da lista')
 map('n', '<leader>jr', function() run_cell(false) end, 'rodar célula')
 map('n', '<leader>jn', function() run_cell(true) end, 'rodar célula e ir para a próxima')
 map('n', '<leader>jl', '<cmd>MoltenEvaluateLine<CR>', 'rodar linha')

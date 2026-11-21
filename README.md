@@ -45,6 +45,18 @@ font-family = "MesloLGS Nerd Font Mono"
 
 Se você acessa o Linux por SSH, a fonte que vale é a do terminal do seu computador, não a do servidor.
 
+## Jupyter
+
+Abra o `.ipynb` (ou um `.py` com células `# %%`) e use `<leader>ji` para iniciar o kernel.
+
+- Se o projeto tem um venv (o ativado no terminal, ou uma pasta `.venv`, `venv` ou `env`
+  na pasta do arquivo ou acima dela), o kernel roda nele. Na primeira vez, o nvim instala
+  o `ipykernel` no venv (pergunta antes) e registra o kernel com o nome da pasta do projeto.
+- Sem venv, abre a lista de kernels. `<leader>jk` abre essa lista sempre.
+
+`<leader>jr` roda a célula, `<leader>jn` roda e vai para a próxima, e `<leader>js` grava as
+saídas no `.ipynb` (faça antes de `:w`). Os outros atalhos aparecem com `<leader>j`.
+
 ## C na norma da 42
 
 Em arquivos `.c` e `.h` (os `.h` são tratados como C, não C++):

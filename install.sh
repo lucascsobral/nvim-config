@@ -264,6 +264,28 @@ py3venv_install() {
   ln -sf "$py" "$SHIMS/python3"
 }
 
+# Fonte MesloLGS Nerd Font Mono (Menlo do macOS + ícones). Só faz diferença se você usa um
+# terminal gráfico nesta máquina; por SSH, quem desenha a fonte é o terminal do seu computador.
+FONT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/MesloNerdFont"
+font_linux_ok() { ls "$FONT_DIR"/MesloLGSNerdFontMono-*.ttf >/dev/null 2>&1; }
+font_linux_install() {
+  local py
+  py="$(managed_python)" || return 1
+  dl "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip" "$TMP/Meslo.zip" || return 1
+  mkdir -p "$FONT_DIR"
+  # Extrai só as 4 variantes MesloLGS Mono (regular, bold, italic, bold italic)
+  "$py" - "$TMP/Meslo.zip" "$FONT_DIR" <<'EOF' || return 1
+import sys, zipfile, os
+with zipfile.ZipFile(sys.argv[1]) as z:
+    for name in z.namelist():
+        base = os.path.basename(name)
+        if base.startswith("MesloLGSNerdFontMono-") and base.endswith(".ttf"):
+            with open(os.path.join(sys.argv[2], base), "wb") as out:
+                out.write(z.read(name))
+EOF
+  if have fc-cache; then fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true; fi
+}
+
 # --- comum aos dois sistemas -------------------------------------------------
 venv_ok() { [ -x "$VENV/bin/python" ] && "$VENV/bin/python" -c 'import pynvim, jupyter_client, jupytext, ipykernel' >/dev/null 2>&1; }
 venv_install() {
@@ -372,10 +394,16 @@ mac_main() {
     brew install "${missing[@]}" || brew upgrade "${missing[@]}" || FAILED+=("brew install ${missing[*]}")
   fi
 
+  title "Fonte"
+  step "MesloLGS Nerd Font (Menlo com ícones)" font_mac_ok font_mac_install
+
   title "Python do nvim (Jupyter)"
   step "Python $PY_VERSION (uv)" python_ok python_install
   step "ambiente Python em $VENV" venv_ok venv_install
 }
+
+font_mac_ok() { brew list --cask font-meslo-lg-nerd-font >/dev/null 2>&1; }
+font_mac_install() { brew install --cask font-meslo-lg-nerd-font; }
 
 # --- Linux -------------------------------------------------------------------
 linux_main() {
@@ -411,6 +439,9 @@ linux_main() {
     todo "clangd: o Mason não tem clangd para Linux ARM; C/C++ fica sem LSP até existir um clangd no PATH"
   fi
   if have magick || have convert; then ok "ImageMagick"; else todo "ImageMagick: ausente; notebooks funcionam, mas sem gráficos dentro do nvim"; fi
+
+  title "Fonte"
+  step "MesloLGS Nerd Font (em $FONT_DIR)" font_linux_ok font_linux_install
 
   title "Python do nvim (Jupyter)"
   step "ambiente Python em $VENV" venv_ok venv_install

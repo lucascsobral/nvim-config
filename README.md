@@ -29,6 +29,21 @@ Os gráficos nos notebooks só aparecem em terminais com o protocolo gráfico do
 
 Depois de instalar, abra um terminal novo e rode `nvim`.
 
+## Fonte
+
+O `install.sh` instala a **MesloLGS Nerd Font**, uma versão da Menlo (a fonte monoespaçada do macOS)
+com os ícones usados pela árvore de arquivos, pela barra de status e pelo autocomplete.
+No macOS ela vem do Homebrew; no Linux vai para `~/.local/share/fonts`, sem sudo.
+
+Escolha a fonte no terminal. No Ghostty (`~/.config/ghostty/config` no Linux,
+`~/Library/Application Support/com.mitchellh.ghostty/config` no macOS):
+
+```
+font-family = "MesloLGS Nerd Font Mono"
+```
+
+Se você acessa o Linux por SSH, a fonte que vale é a do terminal do seu computador, não a do servidor.
+
 ## Sugestões com IA (minuet)
 
 O minuet usa o CLI Proxy API em `llm.alphaspark.com.br` (compatível com OpenAI), com o modelo

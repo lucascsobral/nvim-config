@@ -9,7 +9,7 @@ Extras: git (gitsigns, lazygit), neo-tree, Copilot e Jupyter notebooks (jupytext
 ## Instalar numa máquina nova
 
 ```bash
-git clone <url-deste-repo> ~/.config/nvim
+git clone https://github.com/lucascsobral/nvim-config.git ~/.config/nvim
 ~/.config/nvim/install.sh --check   # só mostra o que existe e o que falta
 ~/.config/nvim/install.sh           # instala
 ```

@@ -1,0 +1,5 @@
+# Configurações locais do Claude Code (não vão para outras máquinas)
+.claude/
+
+# Lixo do sistema
+.DS_Store

@@ -19,6 +19,7 @@ case "${1:-}" in
   *) echo "uso: $0 [--check]" >&2; exit 2 ;;
 esac
 
+CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL="$HOME/.local"
 BIN="$LOCAL/bin"
 OPT="$LOCAL/opt"
@@ -37,6 +38,7 @@ ORIG_PATH="$PATH"
 export PATH="$BIN:$PATH"
 
 FAILED=()
+WARNINGS=() # problemas que não impedem o nvim de funcionar (ex.: chave do minuet ausente)
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -46,6 +48,7 @@ title() { printf '\n%s%s%s\n' "$B" "$*" "$N"; }
 ok() { printf '  %s✓%s %s\n' "$G" "$N" "$*"; }
 todo() { printf '  %s→%s %s\n' "$Y" "$N" "$*"; }
 bad() { printf '  %s✗%s %s\n' "$R" "$N" "$*"; }
+warn() { bad "$*"; WARNINGS+=("$*"); }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -396,6 +399,7 @@ mac_main() {
 
   title "Fonte"
   step "MesloLGS Nerd Font (Menlo com ícones)" font_mac_ok font_mac_install
+  check_terminal_font
 
   title "Python do nvim (Jupyter)"
   step "Python $PY_VERSION (uv)" python_ok python_install
@@ -442,12 +446,138 @@ linux_main() {
 
   title "Fonte"
   step "MesloLGS Nerd Font (em $FONT_DIR)" font_linux_ok font_linux_install
+  check_terminal_font
 
   title "Python do nvim (Jupyter)"
   step "ambiente Python em $VENV" venv_ok venv_install
 
   title "PATH"
   ensure_path_in_shell
+}
+
+# --- verificações (rodam no --check e no fim da instalação) ------------------
+
+# O terminal precisa estar configurado para usar a fonte; instalar não basta.
+check_terminal_font() {
+  if [ -n "${SSH_CONNECTION:-}" ]; then
+    todo "sessão SSH: a fonte que aparece é a do terminal do seu computador, não a desta máquina"
+  fi
+  local xdg="${XDG_CONFIG_HOME:-$HOME/.config}" f checked=0
+  for f in "$xdg/ghostty/config" "$xdg/ghostty/config.ghostty" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"; do
+    [ -f "$f" ] || continue
+    checked=1
+    if grep -qE '^[[:space:]]*font-family[[:space:]]*=.*Meslo.*Nerd' "$f"; then
+      ok "Ghostty usa a MesloLGS Nerd Font"
+    else
+      warn "Ghostty não usa a fonte: adicione em $f a linha font-family = \"MesloLGS Nerd Font Mono\""
+    fi
+  done
+  if have wezterm || [ -d /Applications/WezTerm.app ]; then
+    for f in "$xdg/wezterm/wezterm.lua" "$HOME/.wezterm.lua"; do
+      [ -f "$f" ] || continue
+      checked=1
+      if grep -q 'Meslo' "$f"; then
+        ok "WezTerm usa a MesloLGS Nerd Font"
+      else
+        warn "WezTerm não usa a fonte: em $f, use font = wezterm.font(\"MesloLGS Nerd Font Mono\")"
+      fi
+    done
+  fi
+  [ "$checked" = 1 ] || todo "não achei config do Ghostty/WezTerm: escolha \"MesloLGS Nerd Font Mono\" nas preferências do seu terminal"
+}
+
+# Plugins, LSPs e parsers que a config usa, olhando direto nas pastas (sem abrir o nvim).
+check_nvim_state() {
+  title "Config do nvim"
+  local pack="$DATA/site/pack/core/opt" lock="$CONFIG_DIR/nvim-pack-lock.json" name missing=()
+
+  if [ -f "$lock" ]; then
+    local total=0
+    while IFS= read -r name; do
+      case "$name" in
+        image.nvim | telescope-fzf-native.nvim) continue ;; # opcionais: dependem do terminal / do make
+      esac
+      total=$((total + 1))
+      [ -d "$pack/$name" ] || missing+=("$name")
+    done < <(grep -oE '^    "[^"]+": \{' "$lock" | sed -E 's/^    "([^"]+)".*/\1/')
+    if [ "${#missing[@]}" -eq 0 ]; then
+      ok "plugins instalados ($total)"
+    elif [ "${#missing[@]}" -eq "$total" ]; then
+      todo "nenhum plugin instalado ainda ($total serão instalados pelo nvim)"
+    else
+      todo "plugins faltando: ${missing[*]}"
+    fi
+  fi
+
+  missing=()
+  local mason="$DATA/mason/packages" tools=(clang-format lua-language-server pyright ruff stylua)
+  if ! have clangd && ! { [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = aarch64 ]; }; then tools+=(clangd); fi
+  for name in "${tools[@]}"; do [ -d "$mason/$name" ] || missing+=("$name"); done
+  if [ "${#missing[@]}" -eq 0 ]; then ok "LSPs e formatadores (Mason): ${tools[*]}"; else todo "Mason ainda não instalou: ${missing[*]}"; fi
+  if have clangd; then ok "clangd do sistema: $(command -v clangd)"; fi
+
+  missing=()
+  for name in c cpp python lua; do [ -f "$DATA/site/parser/$name.so" ] || missing+=("$name"); done
+  if [ "${#missing[@]}" -eq 0 ]; then ok "parsers do treesitter (c, cpp, python, lua)"; else todo "parsers faltando: ${missing[*]}"; fi
+}
+
+# Minuet: plugin, chave, acesso ao proxy, modelo e uma sugestão de verdade.
+# Endpoint, modelo e nome da variável são lidos do próprio minuet.lua.
+check_minuet() {
+  title "Sugestões com IA (minuet)"
+  local cfg="$CONFIG_DIR/lua/custom/plugins/minuet.lua"
+  if [ ! -f "$cfg" ]; then
+    todo "minuet não está na config"
+    return 0
+  fi
+  local end_point model key_var base key
+  end_point="$(sed -nE "s/.*end_point = '([^']+)'.*/\1/p" "$cfg" | head -1)"
+  model="$(sed -nE "s/.*model = '([^']+)'.*/\1/p" "$cfg" | head -1)"
+  key_var="$(sed -nE "s/.*api_key = '([^']+)'.*/\1/p" "$cfg" | head -1)"
+  base="${end_point%/chat/completions}"
+
+  if [ -d "$DATA/site/pack/core/opt/minuet-ai.nvim" ]; then ok "plugin minuet instalado"; else todo "plugin minuet: será instalado pelo nvim"; fi
+
+  key="${!key_var:-}"
+  if [ -z "$key" ]; then
+    if grep -qs "$key_var=" "$HOME/.zshrc" "${ZDOTDIR:-$HOME}/.zshrc" "$HOME/.zprofile" "$HOME/.bashrc" "$HOME/.profile"; then
+      warn "$key_var está no arquivo do shell, mas não neste terminal: abra um terminal novo e rode de novo"
+    else
+      warn "$key_var não definida: o minuet fica desligado. Adicione ao ~/.zshrc ou ~/.bashrc: export $key_var=\"sua-chave\""
+    fi
+    return 0
+  fi
+  ok "$key_var definida"
+
+  # A chave vai num arquivo de cabeçalho (só seu), para não aparecer na lista de processos.
+  local hdr="$TMP/auth-header" body="$TMP/minuet-check.json" code
+  (umask 077 && printf 'Authorization: Bearer %s\n' "$key" >"$hdr")
+
+  code="$(curl -sS -m 15 -o "$body" -w '%{http_code}' -H @"$hdr" "$base/models" 2>/dev/null || true)"
+  case "$code" in
+    200)
+      if grep -q "\"$model\"" "$body"; then
+        ok "proxy ${base#https://} aceita a chave e tem o modelo $model"
+      else
+        warn "proxy responde, mas o modelo $model não está na lista: troque em $cfg"
+        return 0
+      fi
+      ;;
+    401 | 403) warn "proxy recusou a chave (HTTP $code): confira $key_var"; return 0 ;;
+    000 | "") warn "sem acesso a ${base#https://} (rede, firewall ou proxy da empresa)"; return 0 ;;
+    *) warn "proxy respondeu HTTP $code em $base/models"; return 0 ;;
+  esac
+
+  # Pedido de sugestão igual ao do minuet (sem raciocínio), medindo o tempo.
+  local req="$TMP/minuet-req.json" time
+  printf '{"model":"%s","max_tokens":20,"reasoning_effort":"none","messages":[{"role":"user","content":"Complete only with code: def soma(a, b):"}]}' "$model" >"$req"
+  time="$(curl -sS -m 20 -o "$body" -w '%{http_code} %{time_total}' -H @"$hdr" -H 'Content-Type: application/json' -d @"$req" "$end_point" 2>/dev/null || true)"
+  if [ "${time%% *}" = 200 ] && grep -q '"content"' "$body"; then
+    ok "sugestão de teste respondida em $(LC_ALL=C printf '%.1f' "${time##* }") s"
+  else
+    warn "o proxy não devolveu sugestão (HTTP ${time%% *}); veja $DATA/minuet-check.json"
+    cp "$body" "$DATA/minuet-check.json" 2>/dev/null || true
+  fi
 }
 
 # --- main --------------------------------------------------------------------
@@ -464,7 +594,13 @@ else
   bootstrap_nvim
 fi
 
+check_nvim_state
+check_minuet
+
 title "Resumo"
+if [ "${#WARNINGS[@]}" -gt 0 ]; then
+  todo "atenção (${#WARNINGS[@]}): o nvim funciona, mas veja os itens marcados com ✗ acima"
+fi
 if [ "${#FAILED[@]}" -gt 0 ]; then
   bad "falhou: ${FAILED[*]}"
   exit 1
@@ -472,5 +608,4 @@ elif [ "$CHECK_ONLY" = 1 ]; then
   ok "verificação concluída. Rode ./install.sh para instalar o que falta."
 else
   ok "pronto. Abra um terminal novo e rode: nvim"
-  todo "IA: defina CLIPROXY_KEY no seu shell para as sugestões do minuet (veja o README)"
 fi

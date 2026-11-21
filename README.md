@@ -4,7 +4,8 @@ Minha config do Neovim, baseada no [kickstart.nvim](https://github.com/nvim-lua/
 Funciona no macOS e no Linux (inclusive sem sudo).
 
 Linguagens: C/C++ (clangd, clang-format), Python (pyright, ruff) e Lua (lua_ls, stylua).
-Extras: git (gitsigns, lazygit), neo-tree, Copilot e Jupyter notebooks (jupytext, molten, image.nvim).
+Extras: git (gitsigns, lazygit), neo-tree, sugestões de código com IA (minuet; Copilot opcional)
+e Jupyter notebooks (jupytext, molten, image.nvim).
 
 ## Instalar numa máquina nova
 
@@ -24,7 +25,31 @@ Em Linux ARM (aarch64), o Mason não tem clangd: o LSP de C/C++ só funciona se 
 Se algo falhar no meio (rede, por exemplo), rode o `install.sh` de novo: o que já foi instalado é pulado.
 Os gráficos nos notebooks só aparecem em terminais com o protocolo gráfico do Kitty (Ghostty, WezTerm, Kitty).
 
-Depois de instalar, abra um terminal novo, rode `nvim` e, na primeira vez, `:Copilot setup`.
+Depois de instalar, abra um terminal novo e rode `nvim`.
+
+## Sugestões com IA (minuet)
+
+O minuet usa o CLI Proxy API em `llm.alphaspark.com.br` (compatível com OpenAI), com o modelo
+`claude-haiku-5-5`. A chave não fica no repositório: defina-a no `~/.zshrc` ou `~/.bashrc` de cada máquina.
+
+```bash
+export CLIPROXY_KEY="sua-chave"
+```
+
+Sem essa variável, o minuet não dispara. Atalhos no modo insert:
+
+| Atalho | Ação |
+|---|---|
+| `Alt+Shift+a` | Aceita a sugestão inteira |
+| `Alt+a` | Aceita só a próxima linha |
+| `Alt+]` / `Alt+[` | Próxima / anterior (também pede uma sugestão) |
+| `Alt+e` | Descarta |
+
+No Mac, o Option esquerdo precisa funcionar como Alt; no Ghostty, use `macos-option-as-alt = left`.
+`<leader>tm` liga e desliga as sugestões automáticas, e `:Minuet change_model` troca o modelo.
+
+O Copilot continua instalado, mas vem desligado para não sobrepor as sugestões do minuet.
+`<leader>tc` liga e desliga o Copilot. Na primeira vez, rode `:Copilot setup`.
 
 ## Onde fica cada coisa
 

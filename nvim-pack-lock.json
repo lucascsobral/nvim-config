@@ -62,6 +62,10 @@
       "rev": "b8a0af521530f8ee68c738657429eab59de6a2ae",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
+    "minuet-ai.nvim": {
+      "rev": "50bf63b031c0391e926fdf0b3d044d37846e6e34",
+      "src": "https://github.com/milanglacier/minuet-ai.nvim"
+    },
     "molten-nvim": {
       "rev": "a286aa914d9a154bc359131aab788b5a077a5a99",
       "src": "https://github.com/benlubas/molten-nvim",

@@ -426,5 +426,5 @@ elif [ "$CHECK_ONLY" = 1 ]; then
   ok "verificação concluída. Rode ./install.sh para instalar o que falta."
 else
   ok "pronto. Abra um terminal novo e rode: nvim"
-  todo "Copilot: na primeira vez, rode :Copilot setup dentro do nvim"
+  todo "IA: defina CLIPROXY_KEY no seu shell para as sugestões do minuet (veja o README)"
 fi

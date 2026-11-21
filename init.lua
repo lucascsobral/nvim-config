@@ -439,6 +439,8 @@ do
     local none = { bg = 'none' }
     require('monokai-pro').setup {
       transparent_background = transparent,
+      -- Plugins cujo fundo o tema pinta por conta própria; com transparência, ficam sem fundo
+      background_clear = transparent and { 'neo-tree', 'telescope', 'which-key' } or {},
       terminal_colors = true,
       devicons = true,
       filter = 'pro', -- "classic", "octagon", "machine", "ristretto", "spectrum", "pro"
@@ -462,9 +464,6 @@ do
           TabLineFill = none,
           MiniStatuslineFilename = none,
           MiniStatuslineInactive = none,
-          NeoTreeNormal = none,
-          NeoTreeNormalNC = none,
-          NeoTreeEndOfBuffer = none,
         }
       end,
     }

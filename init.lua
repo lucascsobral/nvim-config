@@ -456,6 +456,15 @@ do
           FoldColumn = none,
           Folded = none,
           WinSeparator = none,
+          -- Painéis que o tema pinta com fundo sólido: ficam transparentes para o vidro do terminal aparecer
+          StatusLine = none,
+          StatusLineNC = none,
+          TabLineFill = none,
+          MiniStatuslineFilename = none,
+          MiniStatuslineInactive = none,
+          NeoTreeNormal = none,
+          NeoTreeNormalNC = none,
+          NeoTreeEndOfBuffer = none,
         }
       end,
     }

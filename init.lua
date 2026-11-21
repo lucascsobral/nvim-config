@@ -889,7 +889,8 @@ do
         lua = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
-        return { timeout_ms = 500 }
+        -- c_formatter_42 é um script Python: precisa de mais tempo que os outros
+        return { timeout_ms = vim.bo[bufnr].filetype == 'c' and 3000 or 500 }
       else
         return nil
       end
@@ -899,7 +900,7 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
-      c = { 'clang-format' },
+      c = { 'c_formatter_42' }, -- norma da 42 (veja lua/custom/plugins/norminette.lua)
       cpp = { 'clang-format' },
       python = { 'ruff_organize_imports', 'ruff_format' },
       lua = { 'stylua' },
@@ -908,6 +909,25 @@ do
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
       -- javascript = { "prettierd", "prettier", stop_after_first = true },
+    },
+    formatters = {
+      -- Formata C na norma da 42. Fica no ambiente Python do nvim (install.sh).
+      c_formatter_42 = {
+        command = vim.fn.stdpath 'data' .. '/python-venv/bin/c_formatter_42',
+        stdin = true,
+        -- Ele cria um .clang-format temporário na pasta atual; roda numa pasta própria
+        -- para não mexer no projeto.
+        cwd = function()
+          local dir = vim.fn.stdpath 'cache' .. '/c_formatter_42'
+          vim.fn.mkdir(dir, 'p')
+          return dir
+        end,
+        -- O clang-format que vem com ele é só x86_64 no Linux: em Linux ARM não formata.
+        condition = function()
+          local uname = vim.uv.os_uname()
+          return uname.sysname ~= 'Linux' or uname.machine == 'x86_64'
+        end,
+      },
     },
   }
 

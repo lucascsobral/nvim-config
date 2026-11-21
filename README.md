@@ -3,7 +3,8 @@
 Minha config do Neovim, baseada no [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim).
 Funciona no macOS e no Linux (inclusive sem sudo).
 
-Linguagens: C/C++ (clangd, clang-format), Python (pyright, ruff) e Lua (lua_ls, stylua).
+Linguagens: C na norma da 42 (clangd, norminette, c_formatter_42), C++ (clangd, clang-format),
+Python (pyright, ruff) e Lua (lua_ls, stylua).
 Extras: git (gitsigns, lazygit), neo-tree, sugestões de código com IA (minuet)
 e Jupyter notebooks (jupytext, molten, image.nvim).
 
@@ -44,6 +45,21 @@ font-family = "MesloLGS Nerd Font Mono"
 
 Se você acessa o Linux por SSH, a fonte que vale é a do terminal do seu computador, não a do servidor.
 
+## C na norma da 42
+
+Em arquivos `.c` e `.h` (os `.h` são tratados como C, não C++):
+
+- A indentação é com tab, e cada tab conta como 4 colunas. A coluna 81 fica marcada.
+- A `norminette` roda ao abrir e ao salvar. Os erros aparecem como os do LSP: sublinhado,
+  mensagem no fim da linha e `<leader>d` para ver o texto completo. `<leader>tN` liga e desliga.
+  Ela confere toda a norma: 25 linhas por função, 80 colunas, 4 parâmetros, 5 variáveis,
+  5 funções por arquivo, linhas vazias e espaços consecutivos, o cabeçalho da 42 etc.
+- Ao salvar, o `c_formatter_42` formata o arquivo (tabs, alinhamento, `return (x);`).
+  Ele não resolve tudo: funções longas, parâmetros demais e o cabeçalho ficam por sua conta.
+  Para salvar sem formatar, use `<leader>W`. Em Linux ARM ele não roda (só existe para x86_64).
+
+Os dois ficam no ambiente Python do nvim e são instalados pelo `install.sh`.
+
 ## Sugestões com IA (minuet)
 
 O minuet usa o CLI Proxy API em `llm.alphaspark.com.br` (compatível com OpenAI), com o modelo
@@ -73,6 +89,7 @@ No Mac, o Option esquerdo precisa funcionar como Alt; no Ghostty, use `macos-opt
 | `lua/custom/options.lua` | Minhas opções |
 | `lua/custom/keymaps.lua` | Meus atalhos |
 | `lua/custom/plugins/*.lua` | Plugins extras; qualquer arquivo novo aqui é carregado sozinho |
+| `lua/custom/plugins/norminette.lua` | Norma da 42 em C: tabs, norminette e `.h` como C |
 | `nvim-pack-lock.json` | Versão exata de cada plugin (mantém as máquinas iguais) |
 | `install.sh` | Instalador para macOS e Linux |
 

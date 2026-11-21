@@ -31,7 +31,7 @@ NVIM_MIN=0.12.0
 NODE_MIN=20
 NODE_LINE=latest-v24.x
 PY_VERSION=3.13
-PY_PACKAGES=(pynvim jupyter_client ipykernel jupytext nbformat pillow cairosvg pyperclip matplotlib numpy pandas)
+PY_PACKAGES=(pynvim jupyter_client ipykernel jupytext nbformat pillow cairosvg pyperclip matplotlib numpy pandas norminette c-formatter-42)
 ZIG_VERSION=0.14.1
 
 ORIG_PATH="$PATH"
@@ -290,7 +290,7 @@ EOF
 }
 
 # --- comum aos dois sistemas -------------------------------------------------
-venv_ok() { [ -x "$VENV/bin/python" ] && "$VENV/bin/python" -c 'import pynvim, jupyter_client, jupytext, ipykernel' >/dev/null 2>&1; }
+venv_ok() { [ -x "$VENV/bin/python" ] && "$VENV/bin/python" -c 'import pynvim, jupyter_client, jupytext, ipykernel, norminette, c_formatter_42' >/dev/null 2>&1; }
 venv_install() {
   [ -x "$VENV/bin/python" ] || uv venv -q --python "$PY_VERSION" "$VENV" || return 1
   VIRTUAL_ENV="$VENV" uv pip install -q "${PY_PACKAGES[@]}"
@@ -401,7 +401,7 @@ mac_main() {
   step "MesloLGS Nerd Font (Menlo com ícones)" font_mac_ok font_mac_install
   check_terminal_font
 
-  title "Python do nvim (Jupyter)"
+  title "Python do nvim (Jupyter e norminette)"
   step "Python $PY_VERSION (uv)" python_ok python_install
   step "ambiente Python em $VENV" venv_ok venv_install
 }
@@ -448,7 +448,7 @@ linux_main() {
   step "MesloLGS Nerd Font (em $FONT_DIR)" font_linux_ok font_linux_install
   check_terminal_font
 
-  title "Python do nvim (Jupyter)"
+  title "Python do nvim (Jupyter e norminette)"
   step "ambiente Python em $VENV" venv_ok venv_install
 
   title "PATH"

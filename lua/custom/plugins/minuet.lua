@@ -1,4 +1,4 @@
--- Minuet: sugestões de código com IA em texto cinza (como o Copilot), usando o seu
+-- Minuet: sugestões de código com IA em texto cinza, usando o seu
 -- CLI Proxy API (compatível com OpenAI) em llm.alphaspark.com.br.
 --
 -- A chave NÃO fica aqui (o repositório é público): ela é lida da variável de ambiente

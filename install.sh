@@ -385,7 +385,7 @@ linux_main() {
   step "fd (busca de arquivos)" fd_ok fd_install
   step "lazygit" lazygit_ok lazygit_install
   step "tree-sitter CLI" ts_ok ts_install
-  step "Node.js $NODE_MIN+ (Copilot e pyright)" node_ok node_install
+  step "Node.js $NODE_MIN+ (usado pelo pyright)" node_ok node_install
   step "compilador C (parsers do treesitter)" cc_ok cc_install
   step "unzip (usado pelo Mason)" unzip_ok unzip_install
   step "python3 com venv (usado pelo Mason)" py3venv_ok py3venv_install

@@ -19,6 +19,8 @@ git clone https://github.com/lucascsobral/nvim-config.git ~/.config/nvim
 - **Linux:** baixa tudo para `~/.local` (Neovim, ripgrep, fd, lazygit, tree-sitter, Node, uv/Python), sem sudo e sem apt.
   Se faltar compilador C, `unzip` ou `python3-venv`, o script cria substitutos em
   `~/.local/share/nvim/shims`, que só valem dentro do nvim.
+  Também coloca `~/.local/bin` no PATH, no `~/.zshrc` e/ou no `~/.bashrc`. O arquivo do shell
+  que você usa é criado se ainda não existir; o script funciona igual com zsh ou bash.
 
 Precisa existir na máquina: `git`, `curl`, `tar` e `gzip`.
 Em Linux ARM (aarch64), o Mason não tem clangd: o LSP de C/C++ só funciona se já houver um `clangd` no PATH.

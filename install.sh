@@ -90,7 +90,7 @@ gh_asset() {
   shift
   local auth=()
   [ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
-  json="$(curl -fsSL "${auth[@]}" "https://api.github.com/repos/$repo/releases/latest")" || return 1
+  json="$(curl -fsSL ${auth[@]+"${auth[@]}"} "https://api.github.com/repos/$repo/releases/latest")" || return 1
   urls="$(printf '%s' "$json" | grep -o '"browser_download_url": *"[^"]*"' | sed -E 's/.*"(https[^"]+)"$/\1/')"
   for re in "$@"; do
     u="$(printf '%s\n' "$urls" | grep -E "$re" | head -1 || true)"
@@ -304,20 +304,35 @@ bootstrap_nvim() {
 }
 
 ensure_path_in_shell() {
-  case ":$ORIG_PATH:" in *":$BIN:"*) return 0 ;; esac
   local line='export PATH="$HOME/.local/bin:$PATH"' rc added=0
-  if [ "$CHECK_ONLY" = 1 ]; then
-    todo "~/.local/bin não está no PATH: será adicionado ao ~/.bashrc / ~/.zshrc"
-    return 0
-  fi
-  for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    if [ -f "$rc" ] && ! grep -qF "$line" "$rc"; then
-      printf '\n# adicionado pelo install.sh da config do nvim\n%s\n' "$line" >>"$rc"
-      added=1
-      ok "PATH: ~/.local/bin adicionado em $rc"
+  local zshrc="${ZDOTDIR:-$HOME}/.zshrc" bashrc="$HOME/.bashrc"
+  # O arquivo do shell que você usa ($SHELL) é criado se não existir; o do outro shell só é
+  # atualizado se já existir.
+  local login_rc=""
+  case "${SHELL:-}" in
+    */zsh) login_rc="$zshrc" ;;
+    */bash) login_rc="$bashrc" ;;
+  esac
+
+  local needs=()
+  for rc in "$bashrc" "$zshrc"; do
+    if [ -f "$rc" ] || [ "$rc" = "$login_rc" ]; then
+      grep -qF "$line" "$rc" 2>/dev/null || needs+=("$rc")
     fi
   done
-  [ "$added" = 1 ] || todo "adicione ao seu shell: $line"
+  # Já no PATH e nenhum arquivo precisa da linha: nada a fazer.
+  case ":$ORIG_PATH:" in *":$BIN:"*) [ "${#needs[@]}" -eq 0 ] && return 0 ;; esac
+
+  if [ "$CHECK_ONLY" = 1 ]; then
+    for rc in ${needs[@]+"${needs[@]}"}; do todo "PATH: ~/.local/bin será adicionado em $rc"; done
+    return 0
+  fi
+  for rc in ${needs[@]+"${needs[@]}"}; do
+    printf '\n# adicionado pelo install.sh da config do nvim\n%s\n' "$line" >>"$rc"
+    added=1
+    ok "PATH: ~/.local/bin adicionado em $rc"
+  done
+  [ "$added" = 1 ] || ok "PATH: ~/.local/bin já está configurado"
 }
 
 # --- macOS -------------------------------------------------------------------

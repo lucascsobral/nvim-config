@@ -24,6 +24,9 @@ o.shiftwidth = 4
 o.softtabstop = 4
 o.shiftround = true
 
+-- Nenhum plugin usa Python pelo provider do Neovim (a norminette roda como programa externo).
+vim.g.loaded_python3_provider = 0
+
 o.swapfile = false
 o.writebackup = false
 o.autoread = true

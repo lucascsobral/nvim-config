@@ -26,17 +26,9 @@
       "rev": "84a4987ff36798c2fc1169cbaff67960aed9776f",
       "src": "https://github.com/NMAC427/guess-indent.nvim"
     },
-    "image.nvim": {
-      "rev": "365e2ace0f619164ae6fd2f6f1d2807775dd6849",
-      "src": "https://github.com/3rd/image.nvim"
-    },
     "indent-blankline.nvim": {
       "rev": "f1e186e44d3b7f9ae918008e2c28ce37c6023d2d",
       "src": "https://github.com/lukas-reineke/indent-blankline.nvim"
-    },
-    "jupytext.nvim": {
-      "rev": "c8baf3ad344c59b3abd461ecc17fc16ec44d0f7b",
-      "src": "https://github.com/GCBallesteros/jupytext.nvim"
     },
     "lazygit.nvim": {
       "rev": "8557434b285217fd0e284da252638567cebb3240",
@@ -61,11 +53,6 @@
     "minuet-ai.nvim": {
       "rev": "50bf63b031c0391e926fdf0b3d044d37846e6e34",
       "src": "https://github.com/milanglacier/minuet-ai.nvim"
-    },
-    "molten-nvim": {
-      "rev": "a286aa914d9a154bc359131aab788b5a077a5a99",
-      "src": "https://github.com/benlubas/molten-nvim",
-      "version": "1.0.0 - 2.0.0"
     },
     "monokai-pro.nvim": {
       "rev": "a68e38b8e55d69a215d0f02598900a79c356da9d",

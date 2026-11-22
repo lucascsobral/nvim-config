@@ -5,8 +5,7 @@ Funciona no macOS e no Linux (inclusive sem sudo).
 
 Linguagens: C na norma da 42 (clangd, norminette, c_formatter_42), C++ (clangd, clang-format),
 Python (pyright, ruff) e Lua (lua_ls, stylua).
-Extras: git (gitsigns, lazygit), neo-tree, sugestões de código com IA (minuet)
-e Jupyter notebooks (jupytext, molten, image.nvim).
+Extras: git (gitsigns, lazygit), neo-tree e sugestões de código com IA (minuet).
 
 ## Instalar numa máquina nova
 
@@ -26,7 +25,6 @@ git clone https://github.com/lucascsobral/nvim-config.git ~/.config/nvim
 Precisa existir na máquina: `git`, `curl`, `tar` e `gzip`.
 Em Linux ARM (aarch64), o Mason não tem clangd: o LSP de C/C++ só funciona se já houver um `clangd` no PATH.
 Se algo falhar no meio (rede, por exemplo), rode o `install.sh` de novo: o que já foi instalado é pulado.
-Os gráficos nos notebooks só aparecem em terminais com o protocolo gráfico do Kitty (Ghostty, WezTerm, Kitty).
 
 Depois de instalar, abra um terminal novo e rode `nvim`.
 
@@ -44,18 +42,6 @@ font-family = "MesloLGS Nerd Font Mono"
 ```
 
 Se você acessa o Linux por SSH, a fonte que vale é a do terminal do seu computador, não a do servidor.
-
-## Jupyter
-
-Abra o `.ipynb` (ou um `.py` com células `# %%`) e use `<leader>ji` para iniciar o kernel.
-
-- Se o projeto tem um venv (o ativado no terminal, ou uma pasta `.venv`, `venv` ou `env`
-  na pasta do arquivo ou acima dela), o kernel roda nele. Na primeira vez, o nvim instala
-  o `ipykernel` no venv (pergunta antes) e registra o kernel com o nome da pasta do projeto.
-- Sem venv, abre a lista de kernels. `<leader>jk` abre essa lista sempre.
-
-`<leader>jr` roda a célula, `<leader>jn` roda e vai para a próxima, e `<leader>js` grava as
-saídas no `.ipynb` (faça antes de `:w`). Os outros atalhos aparecem com `<leader>j`.
 
 ## C na norma da 42
 

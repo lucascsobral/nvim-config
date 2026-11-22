@@ -31,7 +31,7 @@ NVIM_MIN=0.12.0
 NODE_MIN=20
 NODE_LINE=latest-v24.x
 PY_VERSION=3.13
-PY_PACKAGES=(pynvim jupyter_client ipykernel jupytext nbformat pillow cairosvg pyperclip matplotlib numpy pandas norminette c-formatter-42)
+PY_PACKAGES=(norminette c-formatter-42)
 ZIG_VERSION=0.14.1
 
 ORIG_PATH="$PATH"
@@ -290,7 +290,7 @@ EOF
 }
 
 # --- comum aos dois sistemas -------------------------------------------------
-venv_ok() { [ -x "$VENV/bin/python" ] && "$VENV/bin/python" -c 'import pynvim, jupyter_client, jupytext, ipykernel, norminette, c_formatter_42' >/dev/null 2>&1; }
+venv_ok() { [ -x "$VENV/bin/python" ] && "$VENV/bin/python" -c 'import norminette, c_formatter_42' >/dev/null 2>&1; }
 venv_install() {
   [ -x "$VENV/bin/python" ] || uv venv -q --python "$PY_VERSION" "$VENV" || return 1
   VIRTUAL_ENV="$VENV" uv pip install -q "${PY_PACKAGES[@]}"
@@ -303,6 +303,8 @@ bootstrap_nvim() {
     return 0
   fi
   local log="$TMP/nvim-bootstrap.log" status attempt
+  # Manifesto de plugins remotos deixado pelo molten (Jupyter), que saiu da config.
+  if grep -q molten "$DATA/rplugin.vim" 2>/dev/null; then rm -f "$DATA/rplugin.vim"; fi
   local errors='^E[0-9]+:|Error executing|stack traceback|\] error:|Failed to (compile|install)'
   # Duas tentativas: falhas soltas (rede, compilação de um parser) costumam passar na segunda,
   # que só refaz o que faltou.
@@ -313,7 +315,6 @@ bootstrap_nvim() {
       --cmd 'lua local add = vim.pack.add; vim.pack.add = function(specs, opts) opts = opts or {}; opts.confirm = false; return add(specs, opts) end' \
       '+MasonToolsInstallSync' \
       "+lua require('nvim-treesitter').install(vim.g.treesitter_parsers):wait(600000)" \
-      '+UpdateRemotePlugins' \
       '+qa' >"$log" 2>&1 || status=$?
     if [ "$status" = 0 ] && ! grep -qE "$errors" "$log"; then
       ok "nvim configurado"
@@ -375,7 +376,7 @@ mac_main() {
   fi
 
   # fórmula:comando
-  local pairs=(neovim:nvim ripgrep:rg fd:fd lazygit:lazygit tree-sitter-cli:tree-sitter node:node uv:uv imagemagick:magick)
+  local pairs=(neovim:nvim ripgrep:rg fd:fd lazygit:lazygit tree-sitter-cli:tree-sitter node:node uv:uv)
   local missing=() p formula cmd
   for p in "${pairs[@]}"; do
     formula="${p%%:*}" cmd="${p##*:}"
@@ -401,7 +402,7 @@ mac_main() {
   step "MesloLGS Nerd Font (Menlo com ícones)" font_mac_ok font_mac_install
   check_terminal_font
 
-  title "Python do nvim (Jupyter e norminette)"
+  title "Python do nvim (norminette e c_formatter_42)"
   step "Python $PY_VERSION (uv)" python_ok python_install
   step "ambiente Python em $VENV" venv_ok venv_install
 }
@@ -442,13 +443,12 @@ linux_main() {
   if [ "$ARCH" = aarch64 ] && ! have clangd; then
     todo "clangd: o Mason não tem clangd para Linux ARM; C/C++ fica sem LSP até existir um clangd no PATH"
   fi
-  if have magick || have convert; then ok "ImageMagick"; else todo "ImageMagick: ausente; notebooks funcionam, mas sem gráficos dentro do nvim"; fi
 
   title "Fonte"
   step "MesloLGS Nerd Font (em $FONT_DIR)" font_linux_ok font_linux_install
   check_terminal_font
 
-  title "Python do nvim (Jupyter e norminette)"
+  title "Python do nvim (norminette e c_formatter_42)"
   step "ambiente Python em $VENV" venv_ok venv_install
 
   title "PATH"
@@ -495,7 +495,7 @@ check_nvim_state() {
     local total=0
     while IFS= read -r name; do
       case "$name" in
-        image.nvim | telescope-fzf-native.nvim) continue ;; # opcionais: dependem do terminal / do make
+        telescope-fzf-native.nvim) continue ;; # opcional: depende do make
       esac
       total=$((total + 1))
       [ -d "$pack/$name" ] || missing+=("$name")

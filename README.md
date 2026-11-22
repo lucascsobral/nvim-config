@@ -79,6 +79,27 @@ Sem essa variável, o minuet não dispara. Atalhos no modo insert:
 No Mac, o Option esquerdo precisa funcionar como Alt; no Ghostty, use `macos-option-as-alt = left`.
 `<leader>tm` liga e desliga as sugestões automáticas, e `:Minuet change_model` troca o modelo.
 
+## Terminal (zsh)
+
+O `install.sh` também instala, para o zsh:
+
+- **zsh-autocomplete:** mostra as opções de completar enquanto você digita (comandos, flags,
+  arquivos), parecido com o terminal do VS Code. Setas para escolher, Enter para aceitar,
+  seta para cima e `Ctrl+R` para buscar no histórico.
+- **ShellGPT:** escreva o que quer em português, por exemplo `matar o processo na porta 8080`,
+  e aperte `Ctrl+L`. O texto vira o comando, que não roda sozinho: confira e aperte Enter.
+  Usa o mesmo proxy e a mesma `CLIPROXY_KEY` do minuet; o modelo fica em
+  `~/.config/shell_gpt/.sgptrc` (`DEFAULT_MODEL`). Fora do atalho: `sgpt "pergunta"`.
+
+Os dois são carregados por `shell/zsh-extras.zsh`, que o script põe no topo do `~/.zshrc`.
+O `Ctrl+L` deixa de limpar a tela; para isso, use `clear`.
+O zsh-autocomplete não funciona junto com:
+
+- chamadas a `compinit` no `~/.zshrc` (ele mesmo chama);
+- o `zsh-autosuggestions`, que impede o menu de aparecer.
+
+O script avisa se encontrar algum dos dois, mas não mexe neles.
+
 ## Onde fica cada coisa
 
 | Arquivo | O que tem |
@@ -89,6 +110,7 @@ No Mac, o Option esquerdo precisa funcionar como Alt; no Ghostty, use `macos-opt
 | `lua/custom/plugins/*.lua` | Plugins extras; qualquer arquivo novo aqui é carregado sozinho |
 | `lua/custom/plugins/norminette.lua` | Norma da 42 em C: tabs, norminette e `.h` como C |
 | `nvim-pack-lock.json` | Versão exata de cada plugin (mantém as máquinas iguais) |
+| `shell/zsh-extras.zsh` | zsh-autocomplete e o atalho `Ctrl+L` do ShellGPT |
 | `install.sh` | Instalador para macOS e Linux |
 
 ## Atualizar plugins

@@ -580,6 +580,78 @@ check_minuet() {
   fi
 }
 
+# --- terminal (zsh): menu de completar + ShellGPT ----------------------------
+ZSHRC="${ZDOTDIR:-$HOME}/.zshrc"
+ZSH_AC_DIR="$HOME/.local/share/zsh-autocomplete"
+ZSH_EXTRAS="$CONFIG_DIR/shell/zsh-extras.zsh"
+SGPT_RC="$HOME/.config/shell_gpt/.sgptrc"
+
+zac_ok() {
+  [ -r "$ZSH_AC_DIR/zsh-autocomplete.plugin.zsh" ] && return 0
+  [ "$(uname -s)" = Darwin ] && brew list zsh-autocomplete >/dev/null 2>&1
+}
+zac_install() {
+  if [ "$(uname -s)" = Darwin ]; then
+    brew install zsh-autocomplete
+  else
+    git clone -q --depth 1 https://github.com/marlonrichert/zsh-autocomplete.git "$ZSH_AC_DIR"
+  fi
+}
+
+# O shell-gpt atual não declara o click como dependência; sem ele o sgpt nem abre.
+sgpt_ok() { have sgpt && uv tool list 2>/dev/null | grep -q '^shell-gpt '; }
+sgpt_install() { uv tool install -q --force --python "$PY_VERSION" --with click shell-gpt; }
+
+# Sem este arquivo o sgpt pede a chave na primeira vez e a grava nele. A chave vem do
+# CLIPROXY_KEY (veja shell/zsh-extras.zsh), então o arquivo não guarda segredo.
+sgptrc_ok() { [ -f "$SGPT_RC" ]; }
+sgptrc_install() {
+  mkdir -p "$(dirname "$SGPT_RC")" &&
+    printf '%s\n' 'API_BASE_URL=https://llm.alphaspark.com.br/v1' 'DEFAULT_MODEL=gpt-4.1-mini-2025-04-14' \
+      'OPENAI_USE_FUNCTIONS=false' 'REQUEST_TIMEOUT=30' >"$SGPT_RC"
+}
+
+# O zsh-autocomplete precisa ser carregado no topo do .zshrc, antes de qualquer compdef.
+zshrc_ok() { grep -qF 'shell/zsh-extras.zsh' "$ZSHRC" 2>/dev/null; }
+zshrc_install() {
+  local tmp="$TMP/zshrc.new"
+  {
+    printf '# Extras do zsh da config do nvim (zsh-autocomplete + ShellGPT). Precisa ficar no topo.\n'
+    printf '[ -r "%s" ] && source "%s"\n\n' "$ZSH_EXTRAS" "$ZSH_EXTRAS"
+    cat "$ZSHRC" 2>/dev/null || true
+  } >"$tmp" && cat "$tmp" >"$ZSHRC"
+}
+
+# No Ubuntu, o /etc/zsh/zshrc chama compinit, o que atrapalha o zsh-autocomplete.
+zshenv_file() { printf '%s/.zshenv' "${ZDOTDIR:-$HOME}"; }
+zshenv_ok() { grep -q '^skip_global_compinit=1' "$(zshenv_file)" 2>/dev/null; }
+zshenv_install() { printf '\n# adicionado pelo install.sh da config do nvim (zsh-autocomplete)\nskip_global_compinit=1\n' >>"$(zshenv_file)"; }
+
+shell_main() {
+  title "Terminal: menu de completar (zsh-autocomplete) e comandos por IA (ShellGPT)"
+  if ! have zsh; then
+    todo "zsh não encontrado; pulando"
+    return 0
+  fi
+  step "zsh-autocomplete" zac_ok zac_install
+  step "ShellGPT (sgpt)" sgpt_ok sgpt_install
+  step "config do ShellGPT em $SGPT_RC" sgptrc_ok sgptrc_install
+  step "zsh-extras.zsh no topo do $ZSHRC" zshrc_ok zshrc_install
+  [ "$(uname -s)" = Linux ] && step "skip_global_compinit no $(zshenv_file)" zshenv_ok zshenv_install
+
+  # O que o script não mexe sozinho no seu .zshrc, mas impede o menu de aparecer:
+  [ -f "$ZSHRC" ] || return 0
+  if grep -Eq '^[^#]*(^|[^[:alnum:]_-])compinit([^[:alnum:]_]|$)' "$ZSHRC"; then
+    warn "o $ZSHRC chama compinit: comente essas linhas (o zsh-autocomplete já chama)"
+  fi
+  if grep -Eq '^[^#]*zsh-autosuggestions' "$ZSHRC"; then
+    warn "o $ZSHRC carrega o zsh-autosuggestions, que impede o menu de aparecer: comente essa linha"
+  fi
+  if grep -Eq '^[^#]*oh-my-zsh\.sh' "$ZSHRC"; then
+    warn "o $ZSHRC usa o oh-my-zsh, que chama compinit sozinho e pode atrapalhar o zsh-autocomplete"
+  fi
+}
+
 # --- main --------------------------------------------------------------------
 case "$(uname -s)" in
   Darwin) mac_main ;;
@@ -596,6 +668,7 @@ fi
 
 check_nvim_state
 check_minuet
+shell_main
 
 title "Resumo"
 if [ "${#WARNINGS[@]}" -gt 0 ]; then

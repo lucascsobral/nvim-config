@@ -88,8 +88,9 @@ O `install.sh` também instala, para o zsh:
   seta para cima e `Ctrl+R` para buscar no histórico.
 - **ShellGPT:** escreva o que quer em português, por exemplo `matar o processo na porta 8080`,
   e aperte `Ctrl+L`. O texto vira o comando, que não roda sozinho: confira e aperte Enter.
-  Usa o mesmo proxy e a mesma `CLIPROXY_KEY` do minuet; o modelo fica em
-  `~/.config/shell_gpt/.sgptrc` (`DEFAULT_MODEL`). Fora do atalho: `sgpt "pergunta"`.
+  Usa o mesmo proxy e a mesma `CLIPROXY_KEY` do minuet, com o modelo `grok-4.20-0309-non-reasoning`
+  (~2 s). Para trocar, mude `DEFAULT_MODEL` em `~/.config/shell_gpt/.sgptrc`. O atalho apaga as
+  linhas com ` ``` ` que o modelo às vezes manda junto. Fora do atalho: `sgpt "pergunta"`.
 
 Os dois são carregados por `shell/zsh-extras.zsh`, que o script põe no topo do `~/.zshrc`.
 O `Ctrl+L` deixa de limpar a tela; para isso, use `clear`.

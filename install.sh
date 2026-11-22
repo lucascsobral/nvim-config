@@ -607,7 +607,7 @@ sgpt_install() { uv tool install -q --force --python "$PY_VERSION" --with click 
 sgptrc_ok() { [ -f "$SGPT_RC" ]; }
 sgptrc_install() {
   mkdir -p "$(dirname "$SGPT_RC")" &&
-    printf '%s\n' 'API_BASE_URL=https://llm.alphaspark.com.br/v1' 'DEFAULT_MODEL=gpt-4.1-mini-2025-04-14' \
+    printf '%s\n' 'API_BASE_URL=https://llm.alphaspark.com.br/v1' 'DEFAULT_MODEL=grok-4.20-0309-non-reasoning' \
       'OPENAI_USE_FUNCTIONS=false' 'REQUEST_TIMEOUT=30' >"$SGPT_RC"
 }
 
